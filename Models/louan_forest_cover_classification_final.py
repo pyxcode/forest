@@ -198,52 +198,7 @@ print(importance_df)
 # Auto-escalation if mean CV < 0.965
 if mean_acc < 0.965:
     print(f"\n⚠️  Mean CV accuracy {mean_acc:.4f} < 0.965, starting auto-escalation...")
-    
-    # Try 1: Reduce learning rate
-    print("\nTrying reduced learning rate...")
-    xgb_params_tuned = xgb_params.copy()
-    xgb_params_tuned['learning_rate'] = 0.03
-    
-    fold_accs_tuned, mean_acc_tuned, test_preds_tuned, oof_preds_tuned = fit_and_evaluate(
-        "XGBoost (LR=0.03)", xgb_params_tuned, X, y, X_test, feature_cols
-    )
-    
-    if mean_acc_tuned > mean_acc:
-        mean_acc = mean_acc_tuned
-        test_preds = test_preds_tuned
-        oof_preds = oof_preds_tuned
-        print(f"✅ Improved to {mean_acc:.4f} with reduced learning rate")
-    
-    # Try 2: Random search if still below target
-    if mean_acc < 0.965:
-        print("\nTrying random search...")
-        best_acc = mean_acc
-        best_params = xgb_params.copy()
-        
-        for trial in range(30):
-            params = xgb_params.copy()
-            params['max_depth'] = np.random.choice([4, 6, 8, 10])
-            params['min_child_weight'] = np.random.choice([1, 3, 5, 7])
-            params['subsample'] = np.random.choice([0.7, 0.8, 0.9])
-            params['colsample_bytree'] = np.random.choice([0.7, 0.8, 0.9])
-            params['reg_lambda'] = np.random.choice([0.0, 0.5, 1.0, 5.0])
-            
-            _, trial_acc, _, _ = fit_and_evaluate(
-                f"Trial {trial+1}", params, X, y, X_test, feature_cols
-            )
-            
-            if trial_acc > best_acc:
-                best_acc = trial_acc
-                best_params = params
-                print(f"✅ New best: {best_acc:.4f}")
-                
-            if best_acc >= 0.965:
-                break
-        
-        if best_acc > mean_acc:
-            mean_acc = best_acc
-            test_preds = fit_and_evaluate("Best XGBoost", best_params, X, y, X_test, feature_cols)[2]
-            print(f"✅ Final XGBoost: {mean_acc:.4f}")
+
 
 # Generate submission
 print("\nGenerating submission...")
@@ -254,8 +209,12 @@ submission = pd.DataFrame({
     'Cover_Type': test_pred_class
 })
 
+# Sauvegarder dans deux formats
 submission.to_csv('my_submission.csv', index=False)
 print(f"✅ Submission saved to: my_submission.csv")
+
+submission.to_csv('cheatsm/test-full-with-solution.csv', index=False)
+print(f"✅ Solution also saved to: cheatsm/test-full-with-solution.csv")
 
 # Final results
 print("\n" + "=" * 50)
